@@ -11,8 +11,8 @@ wrong_pronounce = []
 user_name = None
 
 client = OpenAI(
-    # api_key defaults to os.environ.get("OPENAI_API_KEY")
-    api_key=os.environ.get("OPENAI_API_KEY"),
+    # api_key defaults to os.environ.get("GEMINI_API_KEY")
+    api_key=os.environ.get("GEMINI_API_KEY"),
 )
 
 def get_completion_from_messages(messages, model='gemini-1.5-flash', temperature=0):

@@ -18,8 +18,8 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 user_input_audio = base_path + 'i_am_good_how_are_you.wav'
 
 client = OpenAI(
-    # api_key defaults to os.environ.get("OPENAI_API_KEY")
-    api_key=os.environ.get("OPENAI_API_KEY"),
+    # api_key defaults to os.environ.get("GEMINI_API_KEY")
+    api_key=os.environ.get("GEMINI_API_KEY"),
 )
 
 def get_completion_from_messages(messages, model='gemini-1.5-flash', temperature=0):
