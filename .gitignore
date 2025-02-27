@@ -169,3 +169,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# json sample of google service
+stellar-smoke-398203-9f9aaeb00229.json
