@@ -1,12 +1,12 @@
 import pronounce_assessment_file
 import intonation
 import tts_to_wav
-from openai import OpenAI
+import google.generativeai as genai
 import stt
 import tts 
 import os 
 
-voice_name = 'en-US-JennyMultilingualNeural'
+voice_name = 'en-US-Standard-C'
 wrong_pronounce = []
 user_name = None
 user_input_text = ''
@@ -18,18 +18,30 @@ option = 6
 base_path = os.path.dirname(os.path.abspath(__file__))
 user_input_audio = os.path.join(base_path, 'i_am_good_how_are_you.wav')
 
-client = OpenAI(
-    # api_key defaults to os.environ.get("GEMINI_API_KEY")
-    api_key=os.environ.get("GEMINI_API_KEY"),
-)
+#-------------- INITIALIZE GEMINI --------------
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+gemini_model = genai.GenerativeModel('gemini-1.5-flash')
 
-def get_completion_from_messages(messages, model='gemini-1.5-flash', temperature=0):
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature
+def get_completion_from_messages(messages, temperature=0):
+    # Convert OpenAI message format to Gemini format
+    prompt = ""
+    for message in messages:
+        role = message['role']
+        content = message['content']
+        if role == 'system':
+            prompt += f"Instructions: {content}\n"
+        elif role == 'user':
+            prompt += f"User: {content}\n"
+        elif role == 'assistant':
+            prompt += f"Assistant: {content}\n"
+    
+    response = gemini_model.generate_content(
+        prompt,
+        generation_config=genai.types.GenerationConfig(
+            temperature=temperature
+        )
     )
-    return response.choices[0].message.content
+    return response.text
 
 while user_input_text != 'exit':
     #-------------- MISPRONOUNCED WORDS --------------
@@ -75,11 +87,12 @@ while user_input_text != 'exit':
     pitch_per_word, overall_pitch = intonation.pitch(pitch_input_text, user_input_audio)
     print(f'Accuracy: {accuracy} \nCompleteness: {completeness} \nFluency: {fluency} \nPer Word Evaluation: {per_word_pronounciation_evaluation} \nPitch Per Word: {pitch_per_word} \nOverall Pitch: {overall_pitch}')
     print('Final Words:', final_words)
-    for idx, word in enumerate(final_words):
-        if word.accuracy_score < 50:
-            mispronounced_words.append(f'{word.word}: {word.accuracy_score}')
-            print('\nYou mispronounced:',word.word, 'accuracy:', word.accuracy_score)
-            # print(mispronounced_words)print(mispronounced_words)
+    for word in final_words:
+        # Check if the word was mispronounced (error_type is not None)
+        if word['error_type'] != 'None':
+            mispronounced_words.append(f"{word['word']}: mispronounced")
+            print('\nYou mispronounced:', word['word'])
+            # print(mispronounced_words)
     
     #-------------- GETTING AND RETURNING USERNAME -------------- 
     if 'what is my name' in prompt:
@@ -100,8 +113,7 @@ while user_input_text != 'exit':
     print('Assistant:', response)
 
     #-------------- TEXT TO SPEECH CHATBOT RESPONSE --------------
-    tts.text_to_speech(voice_name, response)
-    tts_to_wav.text_to_speech(voice_name, response, output_filename)
+    tts.text_to_speech(voice_name, response, output_filename)
 
     #-------------- PRINTING CONTEXT --------------
     print('Context: ', context)

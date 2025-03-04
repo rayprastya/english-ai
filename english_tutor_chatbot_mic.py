@@ -1,27 +1,39 @@
 import os
-import openai
+import google.generativeai as genai
 import pronounce_assessment_mic
 import tts
 import string
-from openai import OpenAI
 
 option = 6
 voice_name = 'en-US-JennyMultilingualNeural'
 wrong_pronounce = []
 user_name = None
 
-client = OpenAI(
-    # api_key defaults to os.environ.get("GEMINI_API_KEY")
-    api_key=os.environ.get("GEMINI_API_KEY"),
-)
+#-------------- INITIALIZE GEMINI --------------
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+model = genai.GenerativeModel('gemini-1.5-flash')
+output_filename = 'output.wav'
 
 def get_completion_from_messages(messages, model='gemini-1.5-flash', temperature=0):
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature
+    # Convert OpenAI message format to Gemini format
+    prompt = ""
+    for message in messages:
+        role = message['role']
+        content = message['content']
+        if role == 'system':
+            prompt += f"Instructions: {content}\n"
+        elif role == 'user':
+            prompt += f"User: {content}\n"
+        elif role == 'assistant':
+            prompt += f"Assistant: {content}\n"
+    
+    response = model.generate_content(
+        prompt,
+        generation_config=genai.types.GenerationConfig(
+            temperature=temperature
+        )
     )
-    return response.choices[0].message.content
+    return response.text
 
 def chat():
     #-------------- GETTING USER INPUT --------------
@@ -93,7 +105,7 @@ def chat():
         print('Assistant:', response)
 
         #-------------- TEXT TO SPEECH CHATBOT RESPONSE --------------
-        tts.text_to_speech(voice_name, response)
+        tts.text_to_speech(voice_name, response, output_filename)
 
         #-------------- PRINTING CONTEXT --------------
         # print('Context: ', context)
