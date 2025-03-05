@@ -1,4 +1,7 @@
 google-generativeai
-azure-cognitiveservices-speech
-praat-parselmouth
 google-cloud-speech
+google-cloud-texttospeech
+praat-parselmouth
+pyaudio
+numpy
+python-dotenv
